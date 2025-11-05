@@ -1,0 +1,13 @@
+# Environments
+.venv
+
+# Poetry
+poetry.lock
+.poetry/
+
+# IDEs and editors
+.idea/
+
+# OS-specific files
+.DS_Store
+
