@@ -2,18 +2,20 @@
 name = "radar"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "ej838639",email = "eric.johnson838639@gmail.com"}
-]
-readme = "README.md"
+authors = [{ name = "ej838639", email = "eric.johnson838639@gmail.com" }]
 requires-python = ">=3.9"
-dependencies = [
-    "pydantic (>=2.12.3,<3.0.0)"
-]
+readme = "README.md"
+dependencies = ["pydantic (>=2.12.3,<3.0.0)"]
 
-[tool.poetry]
-packages = [{include = "radar", from = "src"}]
+[tool.hatch.build.targets.sdist]
+include = ["src/radar"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/radar"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/radar" = "radar"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
