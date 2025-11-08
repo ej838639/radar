@@ -39,12 +39,11 @@ Use Ctrl+C to stop the simulator.
 
 import asyncio
 import json
-from datetime import datetime, timezone
-import signal
-from typing import Optional
-import json
 import random
+import signal
 from datetime import datetime, timezone
+from typing import Optional
+
 from pydantic import BaseModel, confloat, conint
 
 
@@ -56,6 +55,7 @@ class Track(BaseModel):
     el_deg: confloat(ge=-10, le=90)  # type: ignore
     vr_mps: float
     snr_db: float
+
 
 def generate_random_track(track_id: int) -> Track:
     """Generate one random, valid radar track."""
@@ -69,31 +69,33 @@ def generate_random_track(track_id: int) -> Track:
         snr_db=random.uniform(10.0, 40.0),  # good signal quality
     )
 
+
 class UdpSimulator:
-    def __init__(self, host: str = "127.0.0.1", port: int = 9999, rate_hz: float = 10.0):
+    def __init__(
+        self, host: str = "127.0.0.1", port: int = 9999, rate_hz: float = 10.0
+    ):
         self.host = host
         self.port = port
         self.rate_hz = rate_hz
         self.transport: Optional[asyncio.DatagramTransport] = None
-        self.running = False # Control flag for the main loop
+        self.running = False  # Control flag for the main loop
         self._track_id = 0
 
     async def start(self):
         """Start the UDP simulator"""
         loop = asyncio.get_running_loop()
         self.transport, _ = await loop.create_datagram_endpoint(
-            lambda: asyncio.DatagramProtocol(),
-            remote_addr=(self.host, self.port)
+            lambda: asyncio.DatagramProtocol(), remote_addr=(self.host, self.port)
         )
         self.running = True
-        
-        while self.running: # Loop continues until running is False
+
+        while self.running:  # Loop continues until running is False
             self._track_id += 1
             track = generate_random_track(self._track_id)
             # Convert to JSON and send
             json_data = json.dumps(track.model_dump(), default=str)
             self.transport.sendto(json_data.encode())
-            await asyncio.sleep(1/self.rate_hz)
+            await asyncio.sleep(1 / self.rate_hz)
 
     def stop(self):
         """Stop the simulator gracefully -- Called by signal handler when Ctrl+C is pressed"""
@@ -101,22 +103,26 @@ class UdpSimulator:
         if self.transport:
             self.transport.close()
 
+
 async def main():
     # Create and run simulator
     sim = UdpSimulator(rate_hz=10)
-    
+
     # Setup signal handlers for graceful shutdown
     loop = asyncio.get_running_loop()
     signals = (signal.SIGTERM, signal.SIGINT)
     for s in signals:
-        loop.add_signal_handler(s, sim.stop) # Register stop() as the callback for SIGINT (Ctrl+C)
-    
+        loop.add_signal_handler(
+            s, sim.stop
+        )  # Register stop() as the callback for SIGINT (Ctrl+C)
+
     try:
         await sim.start()
     except Exception as e:
         print(f"Error: {e}")
     finally:
         sim.stop()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
