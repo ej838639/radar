@@ -1,9 +1,5 @@
 # Environments
-.venv
-
-# Poetry
-poetry.lock
-.poetry/
+.venv/
 
 # IDEs and editors
 .idea/

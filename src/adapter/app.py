@@ -12,15 +12,6 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, Field, confloat, conint
 
 
-class Track(BaseModel):
-    ts: datetime
-    id: conint(ge=0)  # type: ignore
-    range_m: confloat(ge=0, le=30000)  # type: ignore
-    az_deg: confloat(ge=-180, le=180)  # type: ignore
-    el_deg: confloat(ge=-10, le=90)  # type: ignore
-    vr_mps: float
-    snr_db: float
-
 
 class HealthStatus(BaseModel):
     ts: datetime
