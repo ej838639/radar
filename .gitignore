@@ -11,3 +11,13 @@ poetry.lock
 # OS-specific files
 .DS_Store
 
+# ruff
+.ruff_cache/
+
+# Mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# vs code
+.vscode/
