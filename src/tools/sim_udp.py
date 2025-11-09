@@ -1,40 +1,6 @@
 """
 Simulate a UDP data sender for radar tracks.
 
-Command Line:
-nc -ul 9999 # netcat TCP/UDP networking utility to listen for UDP packets on 127.0.0.1 port 9999
-  -u : UDP mode
-  -l : listen mode
-  9999 : port number
-
-Optional other command line to pretty-print JSON data:
-nc -ul 9999 | jq --unbuffered -R 'fromjson? // .'
-  -R : read raw input (not JSON)
-  fromjson? // . : try to parse each line as JSON, if fails output raw line
-  if needed: install jq: brew install jq  (macOS) or sudo apt-get install jq (Linux)
-
-Open another terminal and run a test: send one UDP packet with JSON data:
-echo -n '{"test":1}' | nc -u -w1 127.0.0.1 9999
-  -n : do not output a trailing newline
-  -u : UDP mode
-  -w1 : timeout after 1 second
-
-Optional network-level debugging with tcpdump:
-sudo tcpdump -i lo0 udp port 9999 -A
-  -i lo0 : listen on loopback interface
-  udp port 9999 : filter for UDP packets on port 9999
-  -A : print each packet in ASCII
-
-Optional process checking with lsof:
-lsof -i UDP:9999
-  -i UDP:9999 : list open files for UDP port 9999
-
-Open another terminal and in the command line:
-python sim_udp.py
-
-This will start sending simulated radar track data as UDP packets to localhost:9999 at 10 Hz.
-
-Use Ctrl+C to stop the simulator.
 """
 
 import asyncio
@@ -44,17 +10,7 @@ import signal
 from datetime import datetime, timezone
 from typing import Optional
 
-from pydantic import BaseModel, confloat, conint
-
-
-class Track(BaseModel):
-    ts: datetime
-    id: conint(ge=0)  # type: ignore
-    range_m: confloat(ge=0, le=30000)  # type: ignore
-    az_deg: confloat(ge=-180, le=180)  # type: ignore
-    el_deg: confloat(ge=-10, le=90)  # type: ignore
-    vr_mps: float
-    snr_db: float
+from common.models import Track
 
 
 def generate_random_track(track_id: int) -> Track:
@@ -102,6 +58,20 @@ class UdpSimulator:
         self.running = False
         if self.transport:
             self.transport.close()
+
+def test_generate_tracks():
+    """Test function to generate and print random tracks."""
+    tracks = [generate_random_track(i) for i in range(1, 11)]
+    print("\nTracks print:")
+    # Print each one nicely
+    for t in tracks:
+        print(
+            f"ID={t.id:2d} | range={t.range_m:7.1f} m | az={t.az_deg:6.1f}° | el={t.el_deg:5.1f}° | vr={t.vr_mps:6.1f} m/s | SNR={t.snr_db:5.1f} dB"
+        )
+
+    print("\nTracks json:")
+    json_str = json.dumps([t.model_dump() for t in tracks], indent=2, default=str)
+    print(json_str)
 
 
 async def main():

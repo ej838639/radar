@@ -8,6 +8,7 @@ readme = "README.md"
 dependencies = [
     "ipykernel>=6.31.0",
     "pydantic (>=2.12.3,<3.0.0)",
+    "prometheus-client>=0.20.0",
 ]
 
 [tool.hatch.build.targets.sdist]

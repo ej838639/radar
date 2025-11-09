@@ -1,0 +1,13 @@
+# Project-local Prometheus configuration for scraping the radar app
+# Run Prometheus with:
+#   prometheus --config.file=./prometheus.yml --storage.tsdb.path=./.prometheus-data
+# The app must expose metrics at http://localhost:8000/metrics
+
+global:
+  scrape_interval: 2s
+  evaluation_interval: 2s
+
+scrape_configs:
+  - job_name: "radar-app"
+    static_configs:
+      - targets: ["localhost:8000"]
