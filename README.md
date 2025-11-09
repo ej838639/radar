@@ -1,8 +1,8 @@
 # Radar Project
 
 Simulated radar data pipeline with:
-- UDP track/health/frame ingestion
 - Simulator that emits JSON tracks at a configurable rate
+- UDP track/health/frame ingestion
 - Prometheus metrics exposed at `http://localhost:8000/metrics`
 
 ## Quick Start (uv instead of pip)

@@ -70,7 +70,7 @@ You can then access Prometheus metrics at http://localhost:8000/metrics
 import asyncio
 import logging
 
-from prometheus_client import Gauge, start_http_server
+from prometheus_client import Counter, Gauge, start_http_server
 
 from adapter.ingest import run_udp_ingest
 from adapter.parser import Parsed
@@ -79,10 +79,16 @@ from common.models import HealthStatus, Track
 log = logging.getLogger("app")
 TEMP_C = Gauge("radar_temperature_c", "Internal temperature (C)")
 CPU_PCT = Gauge("radar_cpu_pct", "CPU load percent")
+PKTS_TOTAL = Counter(
+    "radar_packets_total",
+    "Total UDP packets received by kind",
+    labelnames=("kind",),
+)
 
 
 def handle(msg: Parsed):
     if msg.kind == "track":
+        PKTS_TOTAL.labels(kind="track").inc()
         t: Track = msg.payload  # type: ignore
         log.info(
             "Track id=%s range=%.1f az=%.1f el=%.1f vr=%.1f snr=%.1f",
@@ -94,6 +100,7 @@ def handle(msg: Parsed):
             t.snr_db,
         )
     elif msg.kind == "health":
+        PKTS_TOTAL.labels(kind="health").inc()
         h: HealthStatus = msg.payload  # type: ignore
         TEMP_C.set(h.temperature_c)
         CPU_PCT.set(float(h.cpu_load_pct))
@@ -103,10 +110,13 @@ def handle(msg: Parsed):
             h.temperature_c,
             h.cpu_load_pct,
         )
-    else:  # frame
-        # minimal demo: count items / could route to bus, etc.
+    elif msg.kind == "frame":
+        PKTS_TOTAL.labels(kind="frame").inc()
         tracks = msg.payload.get("tracks", [])  # type: ignore
         log.info("Frame received: %d tracks", len(tracks))
+    else:
+        PKTS_TOTAL.labels(kind="unknown").inc()
+        log.warning("Unknown packet kind: %s", msg.kind)
 
 
 async def main():

@@ -10,7 +10,7 @@ import signal
 from datetime import datetime, timezone
 from typing import Optional
 
-from common.models import Track
+from common.models import HealthStatus, Track
 
 
 def generate_random_track(track_id: int) -> Track:
@@ -48,9 +48,21 @@ class UdpSimulator:
         while self.running:  # Loop continues until running is False
             self._track_id += 1
             track = generate_random_track(self._track_id)
-            # Convert to JSON and send
-            json_data = json.dumps(track.model_dump(), default=str)
-            self.transport.sendto(json_data.encode())
+            self.transport.sendto(json.dumps(track.model_dump(), default=str).encode())
+
+            # Emit a synthetic health status every 50 tracks
+            if self._track_id % 50 == 0:
+                health = HealthStatus(
+                    ts=datetime.now(timezone.utc),
+                    radar_mode="OPERATIONAL",
+                    temperature_c=random.uniform(35.0, 55.0),
+                    supply_v=random.uniform(11.8, 12.6),
+                    cpu_load_pct=random.uniform(5.0, 65.0),
+                )
+                self.transport.sendto(
+                    json.dumps(health.model_dump(), default=str).encode()
+                )
+
             await asyncio.sleep(1 / self.rate_hz)
 
     def stop(self):
@@ -58,6 +70,7 @@ class UdpSimulator:
         self.running = False
         if self.transport:
             self.transport.close()
+
 
 def test_generate_tracks():
     """Test function to generate and print random tracks."""
