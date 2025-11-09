@@ -6,14 +6,14 @@ Main application file
 Optional: Test UDP Functionality with netcat (nc):
 
 Command Line:
-cd /Users/moises2020/python/radar
+cd ~/radar
 nc -ul 9999 # netcat TCP/UDP networking utility to listen for UDP packets on 127.0.0.1 port 9999
   -u : UDP mode
   -l : listen mode
   9999 : port number
 
 Open another terminal and run a test: send one UDP packet with JSON data:
-cd /Users/moises2020/python/radar
+cd ~/radar
 echo -n '{"test":1}' | nc -u -w1 127.0.0.1 9999
   -n : do not output a trailing newline
   -u : UDP mode
@@ -33,14 +33,14 @@ lsof -i UDP:9999
 Test simulated UDP packets with netcat (nc):
 
 Command Line:
-cd /Users/moises2020/python/radar
+cd ~/radar
 nc -ul 9999 # netcat TCP/UDP networking utility to listen for UDP packets on 127.0.0.1 port 9999
   -u : UDP mode
   -l : listen mode
   9999 : port number
 
 Open another terminal and in the command line:
-cd /Users/moises2020/python/radar
+cd ~/radar
 PYTHONPATH=src python -m tools.sim_udp
 
 This will start sending simulated radar track data as UDP packets to localhost:9999 at 10 Hz.
@@ -54,12 +54,12 @@ Run application with Prometheus metrics (uv):
 
 Command line:
 export PYTHONPATH=src # set PYTHONPATH environment variable
-cd /Users/moises2020/python/radar
+cd ~/radar
 uv run python -m app
 
 Open another terminal and in the command line:
 export PYTHONPATH=src # set PYTHONPATH environment variable
-cd /Users/moises2020/python/radar
+cd ~/radar
 uv run python -m tools.sim_udp
 
 Go back to first terminal to see application logs.
