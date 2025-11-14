@@ -43,3 +43,4 @@ exclude = [
 
 line-length = 88
 extend-select = ["I"]  # isort
+ignore = ["I001"]  # unsorted-imports
