@@ -1,42 +1,4 @@
 # High Level System Diagram
-               +---------------------------+
-               |  Radar Simulator (UDP)    |
-               |  sends JSON track/health  |
-               +-------------+-------------+
-                             | UDP :9999
-                             v
-+----------------------------+----------------------------+
-|        Ingest Adapter (UdpIngest)                       |
-|  - asyncio.DatagramProtocol                             |
-|  - Receives raw datagrams                               |
-|  - Calls parse_packet -> Parsed(kind,payload)           |
-+----------------------------+----------------------------+
-                             |
-                             | Python object callback
-                             v
-+---------------------------------------------------------+
-|                Application Core (app.py)                |
-|  - handle(parsed)                                       |
-|  - Updates Prometheus Gauges/Counters                   |
-|  - Logs track / health / frame events                   |
-+---------+---------------------------+--------------------+
-          |                           |
-          |                           | HTTP :8000 (/metrics)
-          v                           v
-+------------------+        +------------------------------+
-| Track Processor  |        | Prometheus Client Server     |
-| (future module)  |        | Exposes metrics in text fmt  |
-|  - Filtering     |        | Consumed by Prometheus (opt) |
-|  - Smoothing     |        +---------------+--------------+
-|  - Association   |                        |
-+------------------+                        | Scrape (HTTP)
-                                            v
-                                   +------------------+
-                                   | Prometheus Server |
-                                   | (optional)        |
-                                   +------------------+
-
-# Mermaid flowchart
 ```mermaid
 flowchart LR
     SIM["Radar Simulator<br/>(sim_udp.py)"] -->|UDP:9999| ING["UdpIngest<br/>(adapter/ingest.py)"]
