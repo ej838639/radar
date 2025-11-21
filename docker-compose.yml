@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    image: radar-app:latest
+    container_name: radar-app
+    ports:
+      - "8000:8000/tcp"
+      - "9999:9999/udp"
+    networks:
+      - radar-net
+
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator  # separate Dockerfile for sim
+    image: radar-sim:latest
+    container_name: radar-sim
+    environment:
+      RADAR_HOST: radar-app  # <-- service name resolves to app container
+      RADAR_PORT: 9999
+    depends_on:
+      - app
+    networks:
+      - radar-net
+
+networks:
+  radar-net:

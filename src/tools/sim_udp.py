@@ -7,6 +7,7 @@ import asyncio
 import json
 import random
 import signal
+import os
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -87,9 +88,13 @@ def test_generate_tracks():
     print(json_str)
 
 
-async def main():
+async def main(
+    host=os.getenv("RADAR_HOST", "127.0.0.1"),
+    port=int(os.getenv("RADAR_PORT", "9999")),
+    rate_hz=10,
+):
     # Create and run simulator
-    sim = UdpSimulator(rate_hz=10)
+    sim = UdpSimulator(host=host, port=port, rate_hz=rate_hz)
 
     # Setup signal handlers for graceful shutdown
     loop = asyncio.get_running_loop()

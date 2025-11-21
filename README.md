@@ -5,38 +5,46 @@ Simulated radar data pipeline with:
 - UDP track/health/frame ingestion
 - Prometheus metrics exposed at `http://localhost:8000/metrics`
 
-## Quick Start (uv instead of pip)
+## Quick Start (Docker Compose)
 
-Install [uv](https://github.com/astral-sh/uv) (fast Python package manager & environment tool):
+Install Docker Desktop for Mac if not already installed.
 
-```bash
-brew install uv   # macOS
-```
-
-Create a virtual environment and install declared project dependencies:
+Build and start both the application and simulator containers in detached mode:
 
 ```bash
-uv venv .venv
-uv sync            # reads pyproject.toml and creates uv.lock
+docker-compose up --build -d
 ```
 
-Run the application (serves /metrics and listens for UDP):
+View the logs from the application to see received UDP messages:
 
 ```bash
-export PYTHONPATH=src # set PYTHONPATH environment variable
-cd ~/radar
-uv run python -m app
+docker-compose logs -f app
 ```
 
-In a second terminal start the UDP simulator:
+You can also view logs from both services:
 
 ```bash
-export PYTHONPATH=src # set PYTHONPATH environment variable
-cd ~/radar
-uv run python -m tools.sim_udp
+docker-compose logs -f'
+```
+Ctrl-C to exit.
+
+Stop the containers:
+
+```bash
+docker-compose down
 ```
 
-Stop with `Ctrl+C` in each terminal.
+To clean up and remove containers, networks, and images:
+
+```bash
+# Remove all stopped containers
+docker container prune -f
+
+# Remove the specific images
+docker rmi radar-sim:latest radar-app:latest
+```
+
+This cleanup ensures a fresh start when you run `docker-compose up` again later.
 
 ## Prometheus Server (optional)
 
@@ -59,10 +67,23 @@ Navigate to `http://localhost:8000/metrics` and query metrics like `radar_temper
 
 ```
 src/
-	app.py              # Main app: exposes metrics & ingests UDP
-	adapter/            # Ingest & parse logic
-	common/             # Shared models (Track, HealthStatus, etc.)
-	tools/sim_udp.py    # UDP simulator
-prometheus.yml        # Local Prometheus scrape config
-pyproject.toml        # Project metadata & dependencies
+  app.py                    # Main app: exposes metrics & ingests UDP
+  adapter/
+    ingest.py               # UDP datagram ingestion
+    parser.py               # Parse JSON messages (Track, Health, Frame)
+  common/
+    models.py               # Pydantic models (Track, HealthStatus, Frame)
+  tools/
+    sim_udp.py              # UDP simulator with configurable host/port
+docs/
+  requirements.md           # Project requirements
+  system_architecture.md    # Architecture documentation
+  interface_specifications.md # Interface specs
+tests/                      # Test suite (empty)
+docker-compose.yml          # Multi-container orchestration (app + simulator)
+Dockerfile                  # Main app container image
+Dockerfile.simulator        # Simulator container image
+prometheus.yml              # Prometheus scrape config
+pyproject.toml              # Project metadata & dependencies
+uv.lock                     # Dependency lock file
 ```

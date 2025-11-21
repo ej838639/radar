@@ -19,6 +19,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Copy dependency metadata first (enable Docker layer caching)
 COPY pyproject.toml ./
+COPY README.md ./
 # Optional: copy lock if you have it
 # COPY uv.lock ./
 

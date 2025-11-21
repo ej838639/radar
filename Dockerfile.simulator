@@ -1,0 +1,34 @@
+# Dockerfile for sim_udp simulator
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONUNBUFFERED=1 \
+  # make src/ available as a module
+  PYTHONPATH=/app/src \
+  # uv installs to ~/.local/bin by default
+  PATH="/root/.local/bin:${PATH}"
+
+WORKDIR /app
+
+# Install curl to fetch uv installer
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install uv (fast Python package manager / resolver)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Copy dependency metadata first (enable Docker layer caching)
+COPY pyproject.toml ./
+COPY README.md ./
+
+# Create a local venv and sync dependencies
+RUN uv venv .venv && uv sync
+
+# Put venv python on PATH
+ENV PATH="/app/.venv/bin:${PATH}"
+
+# Copy application source
+COPY src ./src
+
+# Default command launches the simulator
+CMD ["python", "-m", "tools.sim_udp"]
