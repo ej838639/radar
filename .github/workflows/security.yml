@@ -1,0 +1,113 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly scan on Sundays at midnight UTC
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  dependency-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-groups
+
+      - name: Run safety check for known vulnerabilities
+        run: |
+          uv run pip install safety
+          uv run safety check --json || true
+
+      - name: Run bandit security linter
+        run: |
+          uv run pip install bandit
+          uv run bandit -r src/ -f json -o bandit-report.json || true
+
+      - name: Upload bandit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  docker-image-scan:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image (app)
+        run: |
+          docker build -t radar-app:scan -f Dockerfile .
+
+      - name: Run Trivy vulnerability scanner on app image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'radar-app:scan'
+          format: 'sarif'
+          output: 'trivy-app-image.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload app image scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-app-image.sarif'
+          category: 'docker-app'
+
+      - name: Build Docker image (simulator)
+        run: |
+          docker build -t radar-sim:scan -f Dockerfile.simulator .
+
+      - name: Run Trivy vulnerability scanner on simulator image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'radar-sim:scan'
+          format: 'sarif'
+          output: 'trivy-sim-image.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload simulator image scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-sim-image.sarif'
+          category: 'docker-simulator'
