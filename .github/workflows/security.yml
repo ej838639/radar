@@ -25,7 +25,7 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
 
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -87,7 +87,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload app image scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-app-image.sarif'
@@ -106,7 +106,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload simulator image scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-sim-image.sarif'
