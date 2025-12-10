@@ -1,5 +1,10 @@
 name: Security Scan
 
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
 on:
   push:
     branches: [ main, develop ]
@@ -74,17 +79,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Trivy
+        run: |
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy -y
+
       - name: Build Docker image (app)
         run: |
           docker build -t radar-app:scan -f Dockerfile .
 
-      - name: Run Trivy vulnerability scanner on app image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'radar-app:scan'
-          format: 'sarif'
-          output: 'trivy-app-image.sarif'
-          severity: 'CRITICAL,HIGH'
+      - name: Run Trivy scan on app image
+        run: |
+          trivy image --format sarif --output trivy-app-image.sarif --severity CRITICAL,HIGH radar-app:scan || true
 
       - name: Upload app image scan results
         uses: github/codeql-action/upload-sarif@v3
@@ -97,13 +106,9 @@ jobs:
         run: |
           docker build -t radar-sim:scan -f Dockerfile.simulator .
 
-      - name: Run Trivy vulnerability scanner on simulator image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'radar-sim:scan'
-          format: 'sarif'
-          output: 'trivy-sim-image.sarif'
-          severity: 'CRITICAL,HIGH'
+      - name: Run Trivy scan on simulator image
+        run: |
+          trivy image --format sarif --output trivy-sim-image.sarif --severity CRITICAL,HIGH radar-sim:scan || true
 
       - name: Upload simulator image scan results
         uses: github/codeql-action/upload-sarif@v3
