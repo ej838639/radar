@@ -10,6 +10,9 @@
 # ruff
 .ruff_cache/
 
+# Prometheus local data
+.prometheus-data/
+
 # Mypy
 .mypy_cache/
 .dmypy.json

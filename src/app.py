@@ -70,7 +70,7 @@ You can then access Prometheus metrics at http://localhost:8000/metrics
 import asyncio
 import logging
 
-from prometheus_client import Counter, Gauge, start_http_server
+from prometheus_client import Counter, Gauge, Enum, start_http_server
 
 from adapter.ingest import run_udp_ingest
 from adapter.parser import Parsed
@@ -79,6 +79,12 @@ from common.models import HealthStatus, Track
 log = logging.getLogger("app")
 TEMP_C = Gauge("radar_temperature_c", "Internal temperature (C)")
 CPU_PCT = Gauge("radar_cpu_pct", "CPU load percent")
+SUPPLY_V = Gauge("radar_supply_v", "Power supply voltage (V)")
+RADAR_MODE = Enum(
+    "radar_mode",
+    "Current radar operating mode",
+    states=["BOOT", "STANDBY", "OPERATIONAL", "FAULT"],
+)
 PKTS_TOTAL = Counter(
     "radar_packets_total",
     "Total UDP packets received by kind",
@@ -104,11 +110,14 @@ def handle(msg: Parsed):
         h: HealthStatus = msg.payload  # type: ignore
         TEMP_C.set(h.temperature_c)
         CPU_PCT.set(float(h.cpu_load_pct))
+        SUPPLY_V.set(h.supply_v)
+        RADAR_MODE.state(h.radar_mode)
         log.info(
-            "Health mode=%s temp=%.1fC cpu=%.1f%%",
+            "Health mode=%s temp=%.1fC cpu=%.1f%% supply=%.1fV",
             h.radar_mode,
             h.temperature_c,
             h.cpu_load_pct,
+            h.supply_v,
         )
     elif msg.kind == "frame":
         PKTS_TOTAL.labels(kind="frame").inc()

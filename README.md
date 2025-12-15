@@ -5,7 +5,7 @@ Simulated radar data pipeline with:
 - UDP track/health/frame ingestion
 - Prometheus metrics exposed at `http://localhost:8000/metrics`
 
-## Quick Start (Docker Compose)
+## Start the radar simulation and data ingestion
 
 Install Docker Desktop for Mac if not already installed.
 
@@ -15,53 +15,70 @@ Build and start both the application and simulator containers in detached mode:
 docker-compose up --build -d
 ```
 
+## View the logs
+
 View the logs from the application to see received UDP messages:
 
 ```bash
 docker-compose logs -f app
 ```
 
-You can also view logs from both services:
+Ctrl-C to exit showing the stream of logs.
 
-```bash
-docker-compose logs -f'
-```
-Ctrl-C to exit.
+## Radar app in Prometheus format
 
-Stop the containers:
+For Prometheus metrics, navigate to `http://localhost:8000/metrics` and look for the following metrics:
 
-```bash
-docker-compose down
-```
+Ingest:
+- `radar_ingest_packets_total`
+- `radar_packets_total{kind="track"}`
+- `radar_packets_total{kind="health"}`
 
-To clean up and remove containers, networks, and images:
+Health:
+- `radar_mode`
+- `radar_temperature_c`
+- `radar_cpu_pct`
+- `supply_v`
 
-```bash
-# Remove all stopped containers
-docker container prune -f
+## Prometheus Server UI
+Query, visualize, and alert on metrics.
 
-# Remove the specific images
-docker rmi radar-sim:latest radar-app:latest
-```
+Install Prometheus:
 
-This cleanup ensures a fresh start when you run `docker-compose up` again later.
+- macOS (Homebrew):
+  ```bash
+  brew install prometheus
+  ```
+- Windows (PowerShell + Chocolatey):
+  ```powershell
+  choco install prometheus
+  ```
+  If you do not use Chocolatey, download the Windows tarball from https://prometheus.io/download/ and extract it, then run `prometheus.exe` with the args shown below.
 
-## Prometheus Server (optional)
-
-Install Prometheus via Homebrew:
-
-```bash
-brew install prometheus
-```
-
-Use the provided `prometheus.yml` scrape config in repo root:
+Start the Prometheus server to scrapes metrics from Port 8000 at regular intervals and store historical time-series data.
 
 ```bash
 prometheus --config.file=./prometheus.yml --storage.tsdb.path=./.prometheus-data
 ```
 
-Navigate to `http://localhost:8000/metrics` and query metrics like `radar_temperature_c`.
+View the Prometheus UI at http://localhost:9090/
+- Query the same metrics listed above.
+- Exit the UI with Ctrl-C in the terminal.
 
+When done reviewing the project, stop the containers:
+
+```bash
+docker-compose down
+```
+
+To remove the images:
+
+```bash
+# Remove the specific images
+docker rmi radar-sim:latest radar-app:latest
+```
+
+This cleanup ensures a fresh start when you run `docker-compose up` again later.
 
 ## Project Layout
 
